@@ -1,0 +1,51 @@
+
+name: Compilar APK Planilla Quincenal
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Instalar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar herramientas Android
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Preparar proyecto
+        run: |
+          unzip PlanillaQuincenalAndroid-Proyecto.zip -d proyecto
+          cp proyecto/build.gradle .
+          cp proyecto/settings.gradle .
+          cp proyecto/gradle.properties .
+          cp -R proyecto/app .
+
+      - name: Compilar APK
+        run: gradle assembleDebug
+
+      - name: Guardar APK compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlanillaQuincenal-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
